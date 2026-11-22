@@ -4,13 +4,6 @@
   const fine = matchMedia("(hover: hover) and (pointer: fine)").matches;
   const lab = document.querySelector(".lab");
 
-  /* intro paragraph ends where the headline ends (as on the live site) */
-  const nb = document.querySelector(".hero h1 .nb");
-  const fit = () => {
-    const copy = nb.closest(".hero-copy");
-    copy.style.setProperty("--dot-w", nb.getBoundingClientRect().right - copy.getBoundingClientRect().left + "px");
-  };
-
   /* headline: split into letters that lift as the pointer passes, like keys */
   const h1 = document.querySelector(".hero h1");
   const letters = [];
@@ -29,20 +22,16 @@
   };
   h1.setAttribute("aria-label", h1.textContent.replace("_", "").replace(/\s+/g, " ").trim());
   split(h1);
-  fit(); addEventListener("resize", fit); document.fonts?.ready.then(fit);
   if (!reduce) {
     const wave = (x, y) => letters.forEach((s) => {
       const r = s.getBoundingClientRect(), d = Math.hypot(x - (r.left + r.width / 2), y - (r.top + r.height / 2));
-      const k = Math.max(0, 1 - d / 150);
-      s.style.transform = k ? `translateY(${-k * 22}px) rotate(${(k * 6 * (x < r.left + r.width / 2 ? 1 : -1)).toFixed(1)}deg)` : "";
+      const k = Math.max(0, 1 - d / 190);
+      s.style.transform = k ? `translateY(${-k * 34}px) rotate(${(k * 6 * (x < r.left + r.width / 2 ? 1 : -1)).toFixed(1)}deg)` : "";
       s.classList.toggle("hit", k > .55);
     });
-    h1.addEventListener("pointermove", (e) => wave(e.clientX, e.clientY));
-    h1.addEventListener("pointerleave", () => wave(-9999, -9999));
-    // a tap presses one key
-    letters.forEach((s) => s.addEventListener("pointerdown", () => {
-      s.animate([{ transform: "translateY(0)" }, { transform: "translateY(10px) scale(.9)" }, { transform: "translateY(0)" }], { duration: 260, easing: "ease-out" });
-    }));
+    let raf = 0;
+    addEventListener("pointermove", (e) => { cancelAnimationFrame(raf); raf = requestAnimationFrame(() => wave(e.clientX, e.clientY)); }, { passive: true });
+    addEventListener("pointerdown", (e) => wave(e.clientX, e.clientY), { passive: true });
   }
 
   /* framed pieces tilt toward the pointer */
@@ -77,6 +66,50 @@
         peek.style.transform = `translate(${x}px, ${y}px) rotate(-3deg)`;
       });
     });
+  }
+
+  /* cards: issue number for the giant numeral, cover for the misprint layer */
+  document.querySelectorAll(".lab .grid .card").forEach((c) => {
+    const n = (c.href.match(/art-discipline-(\d+)/) || [])[1];
+    if (n) c.dataset.n = "." + n;
+    const im = c.querySelector(".card-img img");
+    if (im) c.querySelector(".card-img").style.setProperty("--img", `url("${im.getAttribute("src")}")`);
+  });
+
+  /* section titles: repeat the title and slide it with the scroll */
+  const tracks = [...document.querySelectorAll(".lab .section-head h2")].map((h, i) => {
+    const text = h.textContent.trim();
+    h.setAttribute("aria-label", text);
+    const t = document.createElement("span"); t.className = "track"; t.setAttribute("aria-hidden", "true");
+    for (let k = 0; k < 8; k++) { const s = document.createElement("span"); s.textContent = text + "_"; t.append(s); }
+    h.textContent = ""; h.append(t);
+    return { h, t, dir: i % 2 ? 1 : -1 };
+  });
+  const grid = document.querySelector(".lab .grid");
+  let lastY = scrollY, skewT = 0;
+  const onScroll = () => {
+    if (!reduce) {
+      tracks.forEach(({ h, t, dir }) => {
+        const r = h.getBoundingClientRect();
+        if (r.bottom < -200 || r.top > innerHeight + 200) return;
+        const base = dir < 0 ? 0 : -t.scrollWidth / 3;
+        t.style.transform = `translateX(${base + dir * (innerHeight - r.top) * .35}px)`;
+      });
+      // the grid leans with the scroll speed, then settles
+      const v = Math.max(-1, Math.min(1, (scrollY - lastY) / 60)); lastY = scrollY;
+      if (grid) { grid.style.setProperty("--skew", (v * 2.2).toFixed(2) + "deg"); clearTimeout(skewT); skewT = setTimeout(() => grid.style.setProperty("--skew", "0deg"), 120); }
+    }
+  };
+  addEventListener("scroll", onScroll, { passive: true }); onScroll();
+
+  /* a cursor that inverts what it touches */
+  if (fine && !reduce) {
+    const cur = document.createElement("div"); cur.id = "cur"; cur.setAttribute("aria-hidden", "true"); lab.append(cur);
+    let cx = 0, cy = 0, tx = 0, ty = 0;
+    addEventListener("pointermove", (e) => { tx = e.clientX; ty = e.clientY; cur.classList.add("on"); cur.classList.toggle("big", !!e.target.closest("a, button")); }, { passive: true });
+    document.addEventListener("pointerleave", () => cur.classList.remove("on"));
+    const loop = () => { cx += (tx - cx) * .22; cy += (ty - cy) * .22; cur.style.transform = `translate(${cx}px, ${cy}px)`; requestAnimationFrame(loop); };
+    loop();
   }
 
   /* subscribe bar: appears once the reader scrolls, hides at the footer */

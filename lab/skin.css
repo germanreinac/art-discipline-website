@@ -112,3 +112,60 @@ body { background: var(--paper); }
   .lab .card.lg, .lab .card:hover { box-shadow: 6px 6px 0 var(--lav), 6px 6px 0 2px var(--ink); }
   .lab .sticky-sub .sub-embed { flex: 1 1 100%; margin-left: -66px; max-width: none; }
 }
+
+/* ================= round 3: push it ================= */
+
+/* headline: oversized, runs across the cover and inverts over whatever it crosses */
+.lab .hero { align-items: start; padding-top: clamp(28px, 4vw, 64px); }
+.lab .hero-copy { min-width: 0; }
+/* the headline is its own layer above the cover, so it can invert over it; clicks pass through */
+.lab .hero h1 { position: relative; z-index: 3; pointer-events: none; animation: none; color: #fff; mix-blend-mode: difference; white-space: nowrap; font-size: clamp(2.3rem, 10.4vw, 12.5rem); line-height: .9; letter-spacing: -.06em; margin: .12em 0 .32em; }
+.lab .hero h1 .ch.hit { color: #6e9a24; } /* shows as purple once inverted against the paper */
+.lab .hero .lede { max-width: 40ch; }
+.lab .hero-art { z-index: 1; margin-top: clamp(40px, 9vw, 170px); }
+
+/* a cursor that inverts what it touches */
+#cur { position: fixed; left: 0; top: 0; width: 34px; height: 34px; margin: -17px 0 0 -17px; border-radius: 50%; background: #fff; mix-blend-mode: difference; pointer-events: none; z-index: 70; opacity: 0; transition: width .2s, height .2s, margin .2s, opacity .2s; }
+#cur.on { opacity: 1; }
+#cur.big { width: 96px; height: 96px; margin: -48px 0 0 -48px; }
+
+/* section titles run as moving type, alternating solid and outlined */
+.lab .section-head { flex-direction: column; align-items: stretch; gap: 10px; border-bottom: 0; padding-bottom: 0; margin-bottom: clamp(20px, 3vw, 36px); }
+.lab .section-head::after { display: none; }
+.lab .section-head h2 { margin-inline: calc(50% - 50vw); overflow: hidden; border-block: 2px solid currentColor; font-size: clamp(2.6rem, 8.6vw, 8.5rem); line-height: 1.05; letter-spacing: -.05em; white-space: nowrap; }
+.lab .section-head h2::after { content: none; }
+.lab .section-head h2 .track { display: inline-flex; gap: .5em; padding-inline: .25em; will-change: transform; }
+.lab .section-head h2 .track span:nth-child(even) { color: transparent; -webkit-text-stroke: 2px currentColor; }
+.lab .section-head > p, .lab .section-head > .more { align-self: flex-end; }
+
+/* start here: an inverted band */
+.lab main > .section:nth-of-type(2) { background: var(--ink); color: var(--paper); box-shadow: 0 0 0 100vmax var(--ink); clip-path: inset(0 -100vmax); padding-bottom: clamp(36px, 5vw, 72px); margin-top: clamp(40px, 6vw, 90px); }
+.lab main > .section:nth-of-type(2) .section-head p, .lab main > .section:nth-of-type(2) .meta { color: #b9b9b4; }
+.lab main > .section:nth-of-type(2) .start a { border-bottom-color: #55554f; }
+.lab main > .section:nth-of-type(2) .start .num { background: var(--lav); color: var(--ink); }
+.lab main > .section:nth-of-type(2) .start a:hover { background: var(--lav); color: var(--ink); }
+.lab main > .section:nth-of-type(2) .start a:hover .meta { color: var(--ink); }
+.lab main > .section:nth-of-type(2) .start a:hover .num { background: var(--ink); color: var(--lav); }
+.lab .start strong { font-size: clamp(1.15rem, 2vw, 1.7rem); }
+
+/* latest issues: giant outlined numbers break out of the cards, covers are misprinted */
+.lab .grid { --skew: 0deg; transform: skewY(var(--skew)); transition: transform .5s cubic-bezier(.2, .8, .2, 1); padding-top: clamp(24px, 3vw, 48px); row-gap: clamp(48px, 6vw, 90px); }
+.lab .grid .card { overflow: visible; position: relative; }
+.lab .grid .card::after {
+  content: attr(data-n); position: absolute; right: -8px; top: -.5em; z-index: 3; pointer-events: none;
+  font: 700 clamp(64px, 7.4vw, 132px)/1 var(--mono); letter-spacing: -.08em; color: var(--paper); -webkit-text-stroke: 2px var(--ink); paint-order: stroke fill;
+  transition: color .2s, transform .3s cubic-bezier(.3, 1.6, .5, 1);
+}
+.lab .grid .card:hover::after, .lab .grid .card.touched::after { color: var(--lav); transform: translate(-6px, -8px) rotate(-4deg); }
+.lab .card-img { position: relative; }
+.lab .grid .card-img::after {
+  content: ""; position: absolute; inset: 0; background: var(--img) center / cover; mix-blend-mode: multiply;
+  filter: grayscale(1) contrast(1.5); opacity: .5; transform: translate(9px, 6px); transition: transform .3s cubic-bezier(.3, 1.6, .5, 1), opacity .25s;
+}
+.lab .grid .card:hover .card-img::after, .lab .grid .card.touched .card-img::after { transform: none; opacity: 0; }
+
+@media (max-width: 900px) {
+  .lab .hero h1 { white-space: nowrap; font-size: min(10.4vw, 6rem); }
+  .lab .hero-art { margin-top: 0; }
+}
+@media (prefers-reduced-motion: reduce) { #cur { display: none; } .lab .grid { transform: none; } }

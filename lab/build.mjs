@@ -1,25 +1,22 @@
 // Design lab: a test homepage in a new visual direction. NOT part of the live
-// site: `npm run build` ignores this folder. Run `node lab/build.mjs` and serve
-// lab/out/ to look at it.
+// site: `npm run build` ignores this folder. `node lab/build.mjs` writes
+// lab/out/index.html (page content only, as the preview host expects) and
+// lab/out/preview.html (the same page wrapped for a local browser).
 import fs from "node:fs/promises";
 import config from "../site.config.mjs";
 
 const root = new URL("../", import.meta.url);
 const out = new URL("lab/out/", root);
-const posts = JSON.parse(await fs.readFile(new URL("data/posts.json", root))).sort((a, b) => b.date.localeCompare(a.date));
-const products = JSON.parse(await fs.readFile(new URL("data/products.json", root)));
+const read = (p) => fs.readFile(new URL(p, root), "utf8");
+const posts = JSON.parse(await read("data/posts.json")).sort((a, b) => b.date.localeCompare(a.date));
+const products = JSON.parse(await read("data/products.json"));
 
 const esc = (s = "") => String(s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
-const img = (url, w) => {
-  const m = url.match(/\/(https?%3A%2F%2F[^/?#]+)$/i);
-  const src = m ? decodeURIComponent(m[1]) : url;
-  return `https://substackcdn.com/image/fetch/w_${w},c_limit,f_auto,q_auto:good,fl_progressive:steep/${encodeURIComponent(src)}`;
-};
 const no = (p) => (p.title.match(/\.(\d+)/) || [])[1];
 const issues = posts.filter(no);
 const head = (p) => p.subtitle || p.title;
-const date = (d) => new Date(d).toLocaleDateString("en-GB", { month: "short", year: "numeric" });
 const live = (p) => `https://artdiscipline.com/p/${p.slug}/`;
+const longDate = (d) => new Date(d).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" });
 const money = (p) => (p.price === 0 ? "Free" : `${p.payWhatYouWant ? "From " : ""}€${p.price}`);
 const short = (n) => n.split(/:| [-–] /)[0].trim();
 const gift = products.find((p) => p.slug === config.freebie);
@@ -27,111 +24,125 @@ const mentorship = config.links.find((l) => /mentorship/i.test(l.label));
 const latest = issues[0];
 const startHere = config.startHere.map((s) => posts.find((p) => p.slug === s)).filter(Boolean);
 
-const disc = (n, name, href, kind, attrs = "") =>
-  `<a class="stk ${kind}" href="${href}" draggable="false" ${attrs}><span class="disc"><b>${n}</b><span class="nm">${name}_</span><i>↘</i></span></a>`;
+// The log: one cell per month since the first issue.
+const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+const first = new Date(issues.at(-1).date), last = new Date(latest.date);
+const next = new Date(Date.UTC(last.getUTCFullYear(), last.getUTCMonth() + 1, 1));
+const years = [];
+for (let y = first.getUTCFullYear(); y <= next.getUTCFullYear(); y++) years.push(y);
+const key = (d) => `${d.getUTCFullYear()}-${d.getUTCMonth()}`;
+const byMonth = new Map();
+[...issues].reverse().forEach((p) => { const k = key(new Date(p.date)); byMonth.set(k, [...(byMonth.get(k) || []), p]); });
+const cell = (y, m) => {
+  const k = `${y}-${m}`, d = Date.UTC(y, m, 1);
+  if (k === key(next)) return `<span class="cell next" title="Next issue"><i class="cur">_</i></span>`;
+  if (d < Date.UTC(first.getUTCFullYear(), first.getUTCMonth(), 1) || d > next) return `<span class="cell off"></span>`;
+  const ps = byMonth.get(k);
+  if (!ps) return `<span class="cell skip" title="No issue in ${MONTHS[m]} ${y}"></span>`;
+  return `<span class="cell${ps.length > 1 ? " two" : ""}">${ps.map((p) => `<button type="button" class="iss" data-n="${no(p)}" aria-label="Issue .${no(p)}: ${esc(head(p))}">.${no(p)}</button>`).join("")}</span>`;
+};
+const DATA = Object.fromEntries(issues.map((p) => [no(p), { t: head(p), d: longDate(p.date), u: live(p) }]));
+const months = byMonth.size;
+const span = (last.getUTCFullYear() - first.getUTCFullYear()) * 12 + last.getUTCMonth() - first.getUTCMonth() + 1;
+const skipped = span - months;
+const since = first.toLocaleDateString("en-GB", { month: "long", year: "numeric" });
 
-const html = `<!doctype html>
-<html lang="en">
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="robots" content="noindex, nofollow">
-<title>Art Discipline · design lab</title>
+const page = `<title>Art Discipline Lab</title>
+<meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600&family=Space+Mono:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="lab.css">
-<script>document.documentElement.classList.add("js"); if (/[?&]v=b/.test(location.search)) document.documentElement.dataset.v = "b";</script>
-</head>
-<body>
-<canvas id="film" aria-hidden="true"></canvas>
-<div id="grain" aria-hidden="true"></div>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Mono:ital,wght@0,400;0,700;1,400&family=Inter:wght@400;500;600&display=swap">
+<style>
+${await read("lab/page.css")}
+</style>
 
-<header id="home">
-  <div id="brand">
-    <p class="mark"><img src="flame.png" alt="" width="147" height="256"><span>Art Discipline<sup>®</sup></span></p>
-    <h1>Find your voice<br>as an artist<i class="cur">_</i></h1>
-    <p class="pitch">A monthly letter on character design, world building and careers in games. From the artist behind OlliOlli World (BAFTA-nominated).</p>
-    <p class="hint"><a href="${live(latest)}">Latest_ .${no(latest)} ${esc(head(latest))} ↘</a></p>
-  </div>
-  <p class="corner tr">Stay creative, stay weird</p>
-  <p class="corner br">${issues.length} issues · 2,000+ readers</p>
-  <nav id="pile" aria-label="Main">
-    ${disc("01", "Read", "#issues", "solid", 'style="--fs:.26"')}
-    ${disc("02", "Shop", "#shop", "line", 'style="--fs:.26"')}
-    ${disc("03", "About", "#about", "solid", 'style="--fs:.24"')}
-    ${mentorship ? disc("04", "1-on-1", mentorship.url, "line", 'style="--fs:.24" target="_blank" rel="noopener"') : ""}
-    ${disc("05", "Subscribe", "#subscribe", "pop", 'style="--fs:.17"')}
-  </nav>
-</header>
+<div class="grain" aria-hidden="true"></div>
 
-<main>
-<section class="sec" id="issues">
-  <div class="inner">
-    <p class="label">01 — Read</p>
-    <h2>Issues_</h2>
-    <p class="big">One email a month on how game art really gets made: process breakdowns, career lessons and the mistakes nobody posts.</p>
-  </div>
-  <div class="strip">
-    ${issues.slice(0, 8).map((p) => `<figure><a href="${live(p)}"><img src="${img(p.cover, 900)}" alt="Cover art for Art Discipline .${no(p)}: ${esc(head(p))}" loading="lazy" decoding="async"></a><figcaption><b>.${no(p)}</b> ${esc(head(p))}_</figcaption></figure>`).join("\n    ")}
-  </div>
-  <div class="inner">
-    <p class="label">Start here</p>
-    <ol class="index">
-      ${startHere.map((p) => `<li><a href="${live(p)}" data-img="${img(p.cover, 600)}"><span class="n">.${no(p)}</span><span class="t">${esc(head(p))}</span><span class="d">${date(p.date)}</span></a></li>`).join("\n      ")}
-    </ol>
-    <p class="more"><a href="https://artdiscipline.com/archive/">All ${issues.length} issues ↘</a></p>
-  </div>
-</section>
+<header class="top"><div class="wrap">
+  <a class="brand" href="#top"><img src="assets/flame.png" alt="" width="147" height="256"><span>Art Discipline<b class="reg">R</b></span></a>
+  <nav><a href="#log">Read</a><a href="#shop">Shop</a><a href="#about">About</a></nav>
+  <a class="pill" href="${config.substack}/subscribe" target="_blank" rel="noopener">Subscribe</a>
+</div></header>
 
-<section class="sec" id="shop">
-  <div class="inner">
-    <p class="label">02 — Shop</p>
-    <h2>Goods_</h2>
-    <p class="big">Improve your creative skills with the tools I use, a character design tutorial and direct feedback on your work.</p>
-    <ul class="goods">
-      ${[gift, ...products.filter((p) => p !== gift).sort((a, b) => a.price - b.price)].map((p) => `<li${p === gift ? ' class="free"' : ""}><a href="${p.url}" target="_blank" rel="noopener"><img src="${p.image}" alt="" loading="lazy"><span class="t">${esc(short(p.name))}</span><span class="d">${money(p)}${p.ratings ? ` · ★ ${p.rating.toFixed(1)}` : ""}</span><span class="go">↘</span></a></li>`).join("\n      ")}
-    </ul>
+<main id="top">
+<section class="hero"><div class="wrap">
+  <p class="label">A monthly newsletter by ${esc(config.author.name)}</p>
+  <h1>Find your voice<br>as an artist<i class="cur">_</i></h1>
+  <div class="hero-row">
+    <p class="lede">Character design, world building and careers in games, from the artist behind OlliOlli World (BAFTA-nominated).</p>
+    <p class="motto">Stay creative,<br>stay weird.</p>
+    ${mentorship ? `<a class="ghost" href="${mentorship.url}" target="_blank" rel="noopener">Book a private 1-on-1 session →</a>` : ""}
   </div>
-</section>
+</div></section>
 
-<section class="sec" id="about">
-  <div class="inner">
-    <p class="label">03 — About</p>
-    <h2>Hi, I'm Germán_</h2>
-    <div class="about">
-      <a class="skull" href="${config.instagram}" target="_blank" rel="noopener" title="Germán Reina on Instagram"><img src="skull.png" alt="Germán Reina" width="640" height="640"></a>
-      <p class="big">${esc(config.author.bio)}</p>
+<section class="log" id="log"><div class="wrap">
+  <div class="sec-head">
+    <h2>The log<i class="cur">_</i></h2>
+    <p>${issues.length} issues since ${since}, with ${skipped === 1 ? "one month" : skipped + " months"} skipped. Pick a month.</p>
+  </div>
+  <div class="log-grid">
+    <div class="cal" role="group" aria-label="Issues by month">
+      <div class="cal-row cal-months"><span></span>${MONTHS.map((m) => `<span>${m}</span>`).join("")}</div>
+      ${years.map((y) => `<div class="cal-row"><span class="yr">${y}</span>${MONTHS.map((_, m) => cell(y, m)).join("")}</div>`).join("\n      ")}
+      <p class="legend"><span><i class="k k-on"></i>Issue</span><span><i class="k k-skip"></i>Skipped month</span><span><i class="k k-next"></i>Next one</span></p>
     </div>
-    <p class="more"><a href="https://artdiscipline.com/about/">More about me ↘</a></p>
+    <a class="print" id="print" href="${live(latest)}" target="_blank" rel="noopener">
+      <span class="print-img"><img id="p-img" src="assets/covers/${no(latest)}.jpg" alt="Cover art for the selected issue"></span>
+      <span class="print-cap"><b id="p-no">.${no(latest)}</b><span id="p-date">${longDate(latest.date)}</span></span>
+      <strong id="p-title">${esc(head(latest))}</strong>
+      <span class="print-go">Read this issue →</span>
+    </a>
   </div>
-</section>
+</div></section>
 
-<section class="sec band" id="subscribe">
-  <div class="inner">
-    <p class="label">05 — Subscribe</p>
-    <h2>Get Art Discipline<sup>®</sup> by email_</h2>
-    <p class="big">Free, once a month. Join 2,000+ artists finding their own voice.</p>
-    <div class="sub-embed"><iframe src="${config.substack}/embed" title="Subscribe to Art Discipline by email" loading="lazy" scrolling="no"></iframe></div>
+<section class="start"><div class="wrap">
+  <div class="sec-head"><h2>Start here</h2><p>New here? These four show what Art Discipline is about.</p></div>
+  <ol class="rows">
+    ${startHere.map((p) => `<li><a href="${live(p)}" target="_blank" rel="noopener"><span class="duo"><img src="assets/covers/${no(p)}.jpg" alt="" loading="lazy"></span><span class="n">.${no(p)}</span><span class="t">${esc(head(p))}</span><span class="go">→</span></a></li>`).join("\n    ")}
+  </ol>
+</div></section>
+
+<section class="shop" id="shop"><div class="wrap">
+  <div class="sec-head"><h2>Shop</h2><p>The tools I use, a character design tutorial and direct feedback on your work.</p></div>
+  <ul class="rows goods">
+    ${[gift, ...products.filter((p) => p !== gift).sort((a, b) => a.price - b.price)].map((p) => `<li${p === gift ? ' class="free"' : ""}><a href="${p.url}" target="_blank" rel="noopener"><span class="duo"><img src="assets/goods/${p.slug}.jpg" alt="" loading="lazy"></span><span class="n">${money(p)}</span><span class="t">${esc(short(p.name))}</span><span class="go">→</span></a></li>`).join("\n    ")}
+  </ul>
+</div></section>
+
+<section class="about" id="about"><div class="wrap about-in">
+  <a class="skull" href="${config.instagram}" target="_blank" rel="noopener" title="${esc(config.author.name)} on Instagram"><img src="assets/skull.png" alt="${esc(config.author.name)}" width="640" height="640"></a>
+  <div>
+    <h2>Hi, I'm Germán.</h2>
+    <p class="bio">${esc(config.author.bio)}</p>
+    <a class="ghost" href="https://artdiscipline.com/about/" target="_blank" rel="noopener">More about me →</a>
   </div>
-</section>
+</div></section>
+
+<section class="sub"><div class="wrap sub-in">
+  <img class="sub-flame" src="assets/flame.png" alt="" width="147" height="256">
+  <div>
+    <h2>Get the next issue by email.</h2>
+    <p>Free, once a month. Join 2,000+ artists finding their own voice.</p>
+    <a class="pill pill-pop" href="${config.substack}/subscribe" target="_blank" rel="noopener">Subscribe free →</a>
+    <p class="note">Preview only: the live site would keep the one-step email box here.</p>
+  </div>
+</div></section>
 </main>
 
-<footer class="foot">
-  <span>Art Discipline<sup>®</sup></span>
-  <span>Stay creative, stay weird.</span>
-  <span>© ${new Date().getFullYear()} ${esc(config.author.name)}</span>
-</footer>
+<footer class="foot"><div class="wrap foot-in">
+  <span class="brand"><span>Art Discipline<b class="reg">R</b></span></span>
+  <span class="foot-motto">Stay creative, stay weird.</span>
+  <span class="label">© ${new Date().getFullYear()} ${esc(config.author.name)}</span>
+</div></footer>
 
-<div id="peek" aria-hidden="true"><img alt=""></div>
-<p id="switch"><a href="?v=a">A · paper</a><a href="?v=b">B · lavender</a></p>
-<script src="lab.js" defer></script>
-</body>
-</html>`;
+<script>
+const ISSUES = ${JSON.stringify(DATA)};
+${await read("lab/page.js")}
+</script>
+`;
 
 await fs.rm(out, { recursive: true, force: true });
 await fs.mkdir(out, { recursive: true });
-await fs.writeFile(new URL("index.html", out), html);
-for (const f of ["lab.css", "lab.js"]) await fs.copyFile(new URL("lab/" + f, root), new URL(f, out));
-for (const f of ["flame.png", "skull.png"]) await fs.copyFile(new URL("public/" + f, root), new URL(f, out));
-console.log("lab built -> lab/out/");
+await fs.cp(new URL("lab/assets/", root), new URL("assets/", out), { recursive: true });
+await fs.writeFile(new URL("index.html", out), page);
+await fs.writeFile(new URL("preview.html", out), `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><style>body{margin:0}</style></head><body>${page}</body></html>`);
+console.log(`lab built: ${issues.length} issues, ${months} months with an issue, ${skipped} skipped`);

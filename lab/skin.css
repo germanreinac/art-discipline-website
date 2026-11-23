@@ -1,171 +1,90 @@
-/* Test skin. Same page, new graphic identity: a designer's layout sheet.
-   Dot-grid paper, square corners, one ink, lavender as a flat second colour,
-   typewriter brackets for every label, registration marks on framed pieces,
-   and covers printed in two inks until you point at them. */
+/* Test skin "Draft". Same page, stripped back: paper, one ink, lavender once.
+   The background is a sheet of line-practice marks (see skin.js). Your movement
+   is wind: marks comb over and settle, the flame leans, letters sway, covers
+   drift in their frames. Nothing else decorates the page. */
 :root {
-  --paper: #e9e9e6;
-  --card: #f4f4f1;
+  --paper: #e6e6e3;
+  --card: transparent;
   --r: 0px;
-  --plate: 8px;
+  --hair: rgba(17, 17, 17, .28);
 }
 body { background: var(--paper); }
-.lab {
-  /* dot-grid layout paper */
-  background-color: var(--paper);
-  background-image: radial-gradient(rgba(17, 17, 17, .2) 1px, transparent 1.3px);
-  background-size: 22px 22px;
-  overflow-x: clip;
-}
-.lab .wrap { padding-left: max(16px, env(safe-area-inset-left, 0px), clamp(16px, 2.6vw, 44px)); padding-right: max(16px, env(safe-area-inset-right, 0px), clamp(16px, 2.6vw, 44px)); }
+.lab { background: var(--paper); position: relative; overflow-x: clip; --wx: 0; --wy: 0; }
+#field { position: fixed; inset: 0; width: 100%; height: 100%; z-index: 0; pointer-events: none; }
+.lab > header, .lab > main, .lab > footer { position: relative; z-index: 1; }
+.lab .wrap { padding-left: max(16px, env(safe-area-inset-left, 0px), clamp(16px, 3.2vw, 56px)); padding-right: max(16px, env(safe-area-inset-right, 0px), clamp(16px, 3.2vw, 56px)); }
 
-/* ---------- labels: [ typewriter brackets ] ---------- */
-.lab .eyebrow::before, .lab .card .meta span:first-child::before, .lab .start .meta::before, .lab .more::before, .lab .top nav a::before { content: "["; margin-right: .45em; }
-.lab .eyebrow::after, .lab .card .meta span:first-child::after, .lab .start .meta::after, .lab .more::after, .lab .top nav a::after { content: "]"; margin-left: .45em; }
-.lab .eyebrow { color: var(--ink); }
-.lab .start .meta { display: block; }
-.lab .card .meta span:first-child { background: none; padding: 0; border-radius: 0; color: var(--ink); }
-.lab .more { border: 0; }
-.lab .more::before, .lab .more::after, .lab .top nav a::before, .lab .top nav a::after { opacity: 0; transition: opacity .15s, margin .15s; }
-.lab .more:hover { background: none; }
-.lab .more:hover::before, .lab .more:hover::after, .lab .top nav a:hover::before, .lab .top nav a:hover::after { opacity: 1; }
+/* ---------- type ---------- */
+.lab h1, .lab h2, .lab h3 { letter-spacing: -.045em; }
+.lab .eyebrow, .lab .meta { font-weight: 400; letter-spacing: .12em; font-size: 11px; color: var(--ink-2); }
+.lab .card .meta span:first-child { background: none; padding: 0; border-radius: 0; color: var(--ink); font-weight: 700; }
 
 /* ---------- top bar ---------- */
-.lab .top { background: var(--paper); backdrop-filter: none; top: env(safe-area-inset-top, 0px); }
-.lab .top nav a { border-radius: 0; padding: 6px 4px; }
-.lab .top nav a:hover, .lab .top nav a[aria-current] { background: none; }
-.lab .brand .flame { transition: transform .25s cubic-bezier(.3, 1.6, .5, 1); transform-origin: 50% 100%; }
-.lab .brand:hover .flame { transform: rotate(-8deg) scale(1.15); }
+.lab .top { background: var(--paper); backdrop-filter: none; border-bottom: 1px solid var(--ink); top: env(safe-area-inset-top, 0px); animation: none; }
+.lab .top nav a { border-radius: 0; font-weight: 400; }
+.lab .top nav a:hover, .lab .top nav a[aria-current] { background: none; text-decoration: underline; text-underline-offset: 5px; }
+.lab .flame { transform-origin: 50% 100%; will-change: transform; }
 
-/* ---------- buttons: square, with a lavender plate that slides out ---------- */
-.lab .btn { border-radius: 0; box-shadow: 0 0 0 var(--lav); transition: transform .15s, box-shadow .15s, background .15s, color .15s; }
-.lab .btn:hover { transform: translate(-3px, -3px); box-shadow: 5px 5px 0 var(--lav), 5px 5px 0 2px var(--ink); }
-.lab .btn-ghost { background: var(--card); }
+/* ---------- buttons: a thin square outline that fills ---------- */
+.lab .btn { border-radius: 0; border-width: 1.5px; font-weight: 400; box-shadow: none; transition: background .15s, color .15s; }
+.lab .btn:hover { transform: none; box-shadow: none; background: var(--lav); color: var(--ink); border-color: var(--ink); }
+.lab .btn-ghost { background: transparent; }
+.lab .btn-ghost:hover { background: var(--ink); color: var(--paper); }
 
-/* ---------- headline: every letter is a key ---------- */
-.lab .hero h1 { cursor: default; }
-.lab .hero h1 .ch { display: inline-block; transition: transform .28s cubic-bezier(.3, 1.6, .5, 1), color .2s; will-change: transform; }
-.lab .hero h1 .ch.hit { color: #7b4fc2; }
-.lab .hero .lede { text-align: left; }
+/* ---------- hero ---------- */
+.lab .hero { align-items: end; padding-top: clamp(40px, 7vw, 120px); padding-bottom: clamp(40px, 6vw, 96px); }
+.lab .hero h1 { font-size: clamp(2.3rem, 6.6vw, 7.4rem); line-height: .98; cursor: default; animation: none; }
+.lab .hero h1 .ch { display: inline-block; will-change: transform; transform-origin: 50% 100%; }
+.lab .hero .lede { text-align: left; max-width: 40ch; color: var(--ink); }
+.lab .enter { animation-name: fade; }
 
-/* ---------- framed pieces: square, on a lavender plate, with registration marks ---------- */
-.lab .card, .lab .gift, .lab .product {
-  border-radius: 0; background: var(--card);
-  box-shadow: var(--plate) var(--plate) 0 var(--lav), var(--plate) var(--plate) 0 2px var(--ink);
-  transition: transform .18s ease-out, box-shadow .18s ease-out;
-  transform: perspective(900px) rotateX(var(--rx, 0deg)) rotateY(var(--ry, 0deg));
-}
-.lab .card:hover { box-shadow: 14px 14px 0 var(--lav), 14px 14px 0 2px var(--ink); transform: perspective(900px) rotateX(var(--rx, 0deg)) rotateY(var(--ry, 0deg)) translate(-3px, -3px); }
-.lab .card.lg { box-shadow: 12px 12px 0 var(--lav), 12px 12px 0 2px var(--ink); }
-.lab .gift { background: var(--lav); box-shadow: var(--plate) var(--plate) 0 var(--ink); }
-.lab .gift-img { border-radius: 0; }
-/* registration marks at the corners of the two feature pieces */
-.lab .hero-art, .lab .gift { position: relative; }
-.lab .hero-art::before, .lab .gift::before {
-  content: ""; position: absolute; inset: -18px; pointer-events: none; z-index: 2;
-  --c: var(--ink); --l: 13px; --t: 2px;
-  background:
-    linear-gradient(var(--c), var(--c)) left top / var(--l) var(--t) no-repeat, linear-gradient(var(--c), var(--c)) left top / var(--t) var(--l) no-repeat,
-    linear-gradient(var(--c), var(--c)) right top / var(--l) var(--t) no-repeat, linear-gradient(var(--c), var(--c)) right top / var(--t) var(--l) no-repeat,
-    linear-gradient(var(--c), var(--c)) left bottom / var(--l) var(--t) no-repeat, linear-gradient(var(--c), var(--c)) left bottom / var(--t) var(--l) no-repeat,
-    linear-gradient(var(--c), var(--c)) right bottom / var(--l) var(--t) no-repeat, linear-gradient(var(--c), var(--c)) right bottom / var(--t) var(--l) no-repeat;
-}
+/* ---------- framed pieces lose their frames ---------- */
+.lab .card, .lab .product { border: 0; border-radius: 0; background: none; box-shadow: none; overflow: visible; transition: none; }
+.lab .card:hover { transform: none; box-shadow: none; }
+.lab .card-img { border: 0; background: #d5d5d1; overflow: hidden; }
+/* covers sit a little larger than their frame, so they can drift with the wind */
+.lab .card-img img { transform: scale(1.1) translate(calc(var(--wx) * -1px), calc(var(--wy) * -1px)); filter: grayscale(1) contrast(1.05); transition: filter .5s; will-change: transform; }
+.lab .card:hover .card-img img, .lab .card.lit .card-img img { filter: none; }
+.lab .card:hover .card-img img { transform: scale(1.1) translate(calc(var(--wx) * -1px), calc(var(--wy) * -1px)); }
+.lab .card-body { padding: 12px 0 0; }
+.lab .card h3 { font-size: 1.05rem; }
+.lab .card.lg h3 { font-size: 1.5rem; }
+.lab .card:hover h3 { text-decoration: underline; text-underline-offset: 5px; text-decoration-thickness: 1.5px; }
 
-/* covers print in black + lavender, and turn full colour when you point at them */
-.lab .card-img { background: var(--lav); }
-.lab .card-img img { filter: grayscale(1) contrast(1.08); mix-blend-mode: multiply; transition: filter .25s, transform .4s; }
-.lab .card:hover .card-img img, .lab .card.touched .card-img img { filter: none; mix-blend-mode: normal; }
-.lab .card.lg .card-img img { filter: none; mix-blend-mode: normal; }
+/* ---------- sections ---------- */
+.lab .section { padding-top: clamp(56px, 8vw, 128px); }
+.lab .section-head { border-bottom: 1px solid var(--ink); padding-bottom: 12px; margin-bottom: clamp(18px, 2.6vw, 32px); }
+.lab .section-head h2 { font-size: clamp(1.3rem, 2vw, 1.7rem); }
+.lab .section-head p { font-size: 14px; }
+.lab .more { border-bottom-width: 1.5px; font-weight: 400; }
+.lab .more:hover { background: none; }
 
-/* ---------- section heads ---------- */
-.lab .section-head { border-bottom-width: 2px; position: relative; }
-.lab .section-head h2::after { content: "_"; animation: blink 1.1s steps(1) infinite; }
-.lab .section-head::after { content: ""; position: absolute; right: 0; bottom: -7px; width: 12px; height: 12px; background: var(--ink); }
+.lab .start a { border-bottom: 1px solid var(--hair); align-items: baseline; transition: padding .25s cubic-bezier(.2, .8, .2, 1); }
+.lab .start .num { -webkit-text-stroke: 0; color: var(--ink-3); font-size: 13px; font-weight: 400; min-width: 34px; }
+.lab .start strong { font-size: clamp(1.15rem, 2.1vw, 1.8rem); letter-spacing: -.04em; }
+.lab .start a:hover { padding-left: 14px; }
+.lab .start a:hover strong { background: none; text-decoration: underline; text-underline-offset: 6px; text-decoration-thickness: 1.5px; }
+.lab .start a:hover .num { color: var(--ink); }
 
-/* ---------- start here: numbered keys ---------- */
-.lab .start a { border-bottom: 1px solid var(--ink); align-items: center; transition: padding .2s, background .15s; }
-.lab .start .num {
-  -webkit-text-stroke: 0; color: var(--paper); background: var(--ink); font-size: 18px; min-width: 44px; height: 44px;
-  display: grid; place-items: center; transition: background .15s, color .15s, transform .25s cubic-bezier(.3, 1.6, .5, 1);
-}
-.lab .start a:hover { background: var(--lav); padding-left: 10px; padding-right: 10px; }
-.lab .start a:hover .num { transform: rotate(-8deg) scale(1.08); }
-.lab .start a:hover strong { background: none; }
-#peek { position: fixed; z-index: 60; left: 0; top: 0; width: clamp(180px, 20vw, 300px); pointer-events: none; opacity: 0; transition: opacity .18s; border: 2px solid var(--ink); background: var(--lav); box-shadow: 8px 8px 0 var(--ink); }
-#peek.on { opacity: 1; }
-#peek img { display: block; width: 100%; aspect-ratio: 16 / 10; object-fit: cover; }
+.lab .grid { gap: clamp(28px, 3vw, 44px) clamp(16px, 2vw, 28px); }
 
-/* ---------- about + footer ---------- */
-.lab .avatar { box-shadow: 6px 6px 0 var(--ink); }
-.lab .foot { background: var(--paper); }
+/* the one block of colour on the page */
+.lab .gift { border: 0; border-radius: 0; box-shadow: none; background: var(--lav); }
+.lab .gift-img { border: 0; border-radius: 0; overflow: hidden; }
+.lab .gift-img img { transform: scale(1.08) translate(calc(var(--wx) * -1px), calc(var(--wy) * -1px)); will-change: transform; }
+
+.lab .avatar { box-shadow: none; border-width: 1.5px; }
+.lab .foot { border-top: 1px solid var(--ink); background: var(--paper); margin-top: clamp(56px, 8vw, 128px); }
 
 /* ---------- subscribe bar ---------- */
-.lab .sticky-sub { border-radius: 0; background: var(--ink); box-shadow: 8px 8px 0 var(--lav), 8px 8px 0 2px var(--ink); }
-.lab .sticky-close { border-radius: 0; }
-.sub-mock { display: flex; align-items: stretch; height: 44px; max-width: 420px; border-radius: 0; text-decoration: none; background: #f5f5f5; border: 2px solid #f5f5f5; }
+.lab .sticky-sub { border-radius: 0; border: 0; background: var(--ink); box-shadow: none; }
+.lab .sticky-close { border-radius: 0; border-width: 1.5px; }
+.lab .sticky-flame { animation: none; }
+.sub-mock { display: flex; align-items: stretch; height: 44px; max-width: 420px; border-radius: 0; text-decoration: none; background: #f5f5f5; }
 .sub-mock span { flex: 1; display: flex; align-items: center; padding: 0 14px; color: #8a8a86; font-size: 15px; }
-.sub-mock b { display: flex; align-items: center; padding: 0 18px; background: var(--lav); color: var(--ink); font: 700 14px var(--mono); }
+.sub-mock b { display: flex; align-items: center; padding: 0 18px; background: var(--lav); color: var(--ink); font: 400 14px var(--mono); }
 .lab .sticky-sub .sub-embed { flex: 0 1 380px; }
 
-@media (max-width: 600px) {
-  .lab .hero-art::before, .lab .gift::before { inset: -10px; --l: 9px; }
-  .lab .card, .lab .gift { --plate: 6px; }
-  .lab .card.lg, .lab .card:hover { box-shadow: 6px 6px 0 var(--lav), 6px 6px 0 2px var(--ink); }
-  .lab .sticky-sub .sub-embed { flex: 1 1 100%; margin-left: -66px; max-width: none; }
-}
-
-/* ================= round 3: push it ================= */
-
-/* headline: oversized, runs across the cover and inverts over whatever it crosses */
-.lab .hero { align-items: start; padding-top: clamp(28px, 4vw, 64px); }
-.lab .hero-copy { min-width: 0; }
-/* the headline is its own layer above the cover, so it can invert over it; clicks pass through */
-.lab .hero h1 { position: relative; z-index: 3; pointer-events: none; animation: none; color: #fff; mix-blend-mode: difference; white-space: nowrap; font-size: clamp(2.3rem, 10.4vw, 12.5rem); line-height: .9; letter-spacing: -.06em; margin: .12em 0 .32em; }
-.lab .hero h1 .ch.hit { color: #6e9a24; } /* shows as purple once inverted against the paper */
-.lab .hero .lede { max-width: 40ch; }
-.lab .hero-art { z-index: 1; margin-top: clamp(40px, 9vw, 170px); }
-
-/* a cursor that inverts what it touches */
-#cur { position: fixed; left: 0; top: 0; width: 34px; height: 34px; margin: -17px 0 0 -17px; border-radius: 50%; background: #fff; mix-blend-mode: difference; pointer-events: none; z-index: 70; opacity: 0; transition: width .2s, height .2s, margin .2s, opacity .2s; }
-#cur.on { opacity: 1; }
-#cur.big { width: 96px; height: 96px; margin: -48px 0 0 -48px; }
-
-/* section titles run as moving type, alternating solid and outlined */
-.lab .section-head { flex-direction: column; align-items: stretch; gap: 10px; border-bottom: 0; padding-bottom: 0; margin-bottom: clamp(20px, 3vw, 36px); }
-.lab .section-head::after { display: none; }
-.lab .section-head h2 { margin-inline: calc(50% - 50vw); overflow: hidden; border-block: 2px solid currentColor; font-size: clamp(2.6rem, 8.6vw, 8.5rem); line-height: 1.05; letter-spacing: -.05em; white-space: nowrap; }
-.lab .section-head h2::after { content: none; }
-.lab .section-head h2 .track { display: inline-flex; gap: .5em; padding-inline: .25em; will-change: transform; }
-.lab .section-head h2 .track span:nth-child(even) { color: transparent; -webkit-text-stroke: 2px currentColor; }
-.lab .section-head > p, .lab .section-head > .more { align-self: flex-end; }
-
-/* start here: an inverted band */
-.lab main > .section:nth-of-type(2) { background: var(--ink); color: var(--paper); box-shadow: 0 0 0 100vmax var(--ink); clip-path: inset(0 -100vmax); padding-bottom: clamp(36px, 5vw, 72px); margin-top: clamp(40px, 6vw, 90px); }
-.lab main > .section:nth-of-type(2) .section-head p, .lab main > .section:nth-of-type(2) .meta { color: #b9b9b4; }
-.lab main > .section:nth-of-type(2) .start a { border-bottom-color: #55554f; }
-.lab main > .section:nth-of-type(2) .start .num { background: var(--lav); color: var(--ink); }
-.lab main > .section:nth-of-type(2) .start a:hover { background: var(--lav); color: var(--ink); }
-.lab main > .section:nth-of-type(2) .start a:hover .meta { color: var(--ink); }
-.lab main > .section:nth-of-type(2) .start a:hover .num { background: var(--ink); color: var(--lav); }
-.lab .start strong { font-size: clamp(1.15rem, 2vw, 1.7rem); }
-
-/* latest issues: giant outlined numbers break out of the cards, covers are misprinted */
-.lab .grid { --skew: 0deg; transform: skewY(var(--skew)); transition: transform .5s cubic-bezier(.2, .8, .2, 1); padding-top: clamp(24px, 3vw, 48px); row-gap: clamp(48px, 6vw, 90px); }
-.lab .grid .card { overflow: visible; position: relative; }
-.lab .grid .card::after {
-  content: attr(data-n); position: absolute; right: -8px; top: -.5em; z-index: 3; pointer-events: none;
-  font: 700 clamp(64px, 7.4vw, 132px)/1 var(--mono); letter-spacing: -.08em; color: var(--paper); -webkit-text-stroke: 2px var(--ink); paint-order: stroke fill;
-  transition: color .2s, transform .3s cubic-bezier(.3, 1.6, .5, 1);
-}
-.lab .grid .card:hover::after, .lab .grid .card.touched::after { color: var(--lav); transform: translate(-6px, -8px) rotate(-4deg); }
-.lab .card-img { position: relative; }
-.lab .grid .card-img::after {
-  content: ""; position: absolute; inset: 0; background: var(--img) center / cover; mix-blend-mode: multiply;
-  filter: grayscale(1) contrast(1.5); opacity: .5; transform: translate(9px, 6px); transition: transform .3s cubic-bezier(.3, 1.6, .5, 1), opacity .25s;
-}
-.lab .grid .card:hover .card-img::after, .lab .grid .card.touched .card-img::after { transform: none; opacity: 0; }
-
-@media (max-width: 900px) {
-  .lab .hero h1 { white-space: nowrap; font-size: min(10.4vw, 6rem); }
-  .lab .hero-art { margin-top: 0; }
-}
-@media (prefers-reduced-motion: reduce) { #cur { display: none; } .lab .grid { transform: none; } }
+@media (max-width: 900px) { .lab .hero h1 { font-size: min(10.4vw, 6rem); white-space: nowrap; } }
+@media (max-width: 600px) { .lab .sticky-sub .sub-embed { flex: 1 1 100%; margin-left: -66px; max-width: none; } }
+@media (prefers-reduced-motion: reduce) { .lab .card-img img, .lab .gift-img img { transform: none; } }

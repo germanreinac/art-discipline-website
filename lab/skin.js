@@ -35,16 +35,17 @@
     const len = gap * .34;
     for (let r = 0; r < rows; r++) for (let c = 0; c < cols; c++) {
       const a = A[r * cols + c], e = Math.min(1, Math.abs(a) * 1.4);
-      const x = c * gap + gap / 2, y = r * gap + gap / 2, s = Math.sin(a), k = Math.cos(a), l = len * (1 + e * .9);
-      // calm strokes are faint grey; stirred ones darken toward purple
-      ctx.strokeStyle = `rgba(${17 + 106 * e | 0}, ${17 + 62 * e | 0}, ${17 + 177 * e | 0}, ${.17 + e * .6})`;
-      ctx.lineWidth = 1 + e * .9;
+      // the paper is clean at rest: a stroke only shows while the wind has hold of it
+      if (e < .03) continue;
+      const x = c * gap + gap / 2, y = r * gap + gap / 2, s = Math.sin(a), k = Math.cos(a), l = len * (.8 + e * .7);
+      ctx.strokeStyle = `rgba(${60 + 63 * e | 0}, ${55 + 24 * e | 0}, ${70 + 124 * e | 0}, ${e * .42})`;
+      ctx.lineWidth = 1;
       ctx.beginPath(); ctx.moveTo(x - s * l, y + k * l); ctx.lineTo(x + s * l, y - k * l); ctx.stroke();
     }
   };
   const stepField = () => {
     let energy = 0;
-    const R = W < 700 ? 110 : 170, R2 = R * R, sp = Math.hypot(wind.x, wind.y);
+    const R = W < 700 ? 90 : 130, R2 = R * R, sp = Math.hypot(wind.x, wind.y);
     for (let r = 0; r < rows; r++) for (let c = 0; c < cols; c++) {
       const i = r * cols + c, x = c * gap + gap / 2, y = r * gap + gap / 2;
       let f = 0;
@@ -52,9 +53,7 @@
         const d2 = (x - wind.px) ** 2 + (y - wind.py) ** 2;
         if (d2 < R2) { const fall = 1 - d2 / R2; f += (wind.x * .012 + wind.y * .004 * Math.sign(x - wind.px)) * fall * fall; }
       }
-      // scrolling sends a slow wave across every row
-      if (scrollGust) f += scrollGust * .00055 * Math.sin(x * .011 + y * .006 + scrollY * .004);
-      V[i] = (V[i] + f - A[i] * .045) * .9; A[i] = clamp(A[i] + V[i], -1.35, 1.35);
+      V[i] = (V[i] + f - A[i] * .07) * .88; A[i] = clamp(A[i] + V[i], -1.35, 1.35);
       energy += Math.abs(V[i]) + Math.abs(A[i]) * .02;
     }
     scrollGust *= .6; if (Math.abs(scrollGust) < .5) scrollGust = 0;
@@ -92,7 +91,7 @@
     flames.forEach((f) => {
       f.v = (f.v + wind.x * .07 - f.a * .1) * .85; f.a = clamp(f.a + f.v, -20, 20);
       const flick = Math.sin(performance.now() / 260 + f.a) * Math.min(3, sp * .4);
-      f.el.style.transform = `skewX(${(-f.a * .7).toFixed(2)}deg) rotate(${(f.a * .35 + flick).toFixed(2)}deg) scaleY(${(1 + Math.min(.18, sp * .012)).toFixed(3)})`;
+      f.el.style.transform = `skewX(${(-f.a * .4).toFixed(2)}deg) rotate(${(f.a * .3 + flick).toFixed(2)}deg) scaleY(${(1 + Math.min(.18, sp * .012)).toFixed(3)})`;
     });
     // covers drift inside their frames
     wxs += (clamp(wind.x, -9, 9) - wxs) * .12; wys += (clamp(wind.y, -9, 9) - wys) * .12;
@@ -107,7 +106,7 @@
   addEventListener("resize", () => { size(); measure(); });
   document.fonts?.ready.then(measure);
   // a first breath across the page, so it is clear the sheet is alive
-  if (!reduce) setTimeout(() => { wind.px = innerWidth * .3; wind.py = innerHeight * .4; wind.has = true; wind.x = 34; scrollGust = 46; wake(); setTimeout(() => { if (lastX === null) wind.has = false; }, 900); }, 500);
+  if (!reduce) setTimeout(() => { wind.px = innerWidth * .3; wind.py = innerHeight * .4; wind.has = true; wind.x = 26; wake(); setTimeout(() => { if (lastX === null) wind.has = false; }, 900); }, 500);
 
   /* covers turn to colour when pointed at; on touch, as they pass the middle of the screen */
   if (!fine && "IntersectionObserver" in window) {
